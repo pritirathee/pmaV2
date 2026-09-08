@@ -412,7 +412,7 @@ if (isset($_GET['month'])) {
                                                     class="fa fa-pencil-alt"></i> </a>
                                             <a href="javascript::void(0);" class="icon" onclick="passValue('delete',<?= $m['id']; ?>)"> <i
                                                     class="fa fa-trash-alt"></i> </a>
-                                            <a href="javascript::void(0);" class="icon" onclick="passValue('copy',<?= $m['id']; ?>)"> 
+                                            <a href="javascript::void(0);" class="icon" onclick="passValue('copy',<?= $m['id']; ?>, this)"> 
                                                 <i class="fa fa-clone" aria-hidden="true"></i>
                                             </a>
                                         </td>
@@ -1379,7 +1379,20 @@ $(".cancel").click(function() {
 </script>
 <script type="text/javascript">
 // getEdit data
-function passValue(type, id) {
+function passValue(type, id, element) {
+    if (type === 'copy') {
+        if ($(element).data('processing')) {
+            return false;
+        }
+        $(element).data('processing', true);
+        $(element).css({
+            'pointer-events': 'none',
+            'opacity': '0.5'
+        });
+        //change icon to loading
+        $(element).find('i').removeClass('fa-clone').addClass('fa-spinner fa-spin');
+    }
+
     $.ajax({
         type: 'GET',
         url: "<?= $this->Url->build('/companies/milesaction/'); ?>" + type + '/' + id,
@@ -1387,32 +1400,33 @@ function passValue(type, id) {
         },
         success: function(data) {
             if (type == 'edit') {
-            // if (type == 'edit' || type == 'copy') {
                 var response = $.parseJSON(data);
-
                 var d = response.due_date.split('-');
                 var date = d[1] + '/' + d[2] + '/' + d[0];
 
-                // Add month/year to title 
-                var title = response.title; 
-                // if (response.milestone_month_year) { 
-                //   title += ' ' + response.milestone_month_year; 
-                // }
-
+                var title = response.title;
                 $("#title").val(title);
                 $("#due_date").val(date);
                 $("#amount").val(response.amount);
                 $("#mile_id").val(response.id);
             } else {
-                // document.getElementById("rowm" + id).remove();
-                // // document.getElementById("m_"+id).remove();
-                // document.getElementById("rowtm" + id).remove();
                 location.reload();
             }
-
+        },
+        error: function() {
+            // Re-enable copy button if request fails
+            if (type === 'copy' && element) {
+                $(element).data('processing', false);
+                $(element).css({
+                    'pointer-events': '',
+                    'opacity': ''
+                });
+                $(element).find('i').removeClass('fa-spinner fa-spin').addClass('fa-clone');
+            }
+            alert('Something went wrong. Please try again.');
         }
     });
-
+    return false;
 }
 
 function mlabel(id) {
