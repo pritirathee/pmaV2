@@ -191,6 +191,9 @@ if (!empty($projects)) extract($projects[0]);
                                                 <option value="External" <?php if (!empty($projects)) {
                                                                                 echo ($source == 'External') ? 'selected' : "";
                                                                             } ?>>External</option>
+                                                <option value="Expertal" <?php if (!empty($projects)) {
+                                                                                echo ($source == 'Expertal') ? 'selected' : "";
+                                                                            } ?>>Expertal</option>
                                             </select>
                                         </div>
                                     </div>
