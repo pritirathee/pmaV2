@@ -122,7 +122,11 @@ $role = $userSession['role'];
                         </thead>
                         <tbody>
                             <?php $i = 1;
+                            $hasRole13 = in_array(13, $userSession['role_name']);
                             foreach ($projects as $p) :
+                                if (!$hasRole13 && $p['source'] === 'Expertal') {
+                                    continue;
+                                }
                                 if ($p['active'] == 1) :
                             ?>
                             <tr id="tr<?= $p['id'] ?>">

@@ -921,6 +921,7 @@ class CompaniesController extends AppController
 			$p['amount'] = $amount;
 			$p['paid'] = $paid;
 			$p['status'] = $l['status'];
+			$p['source'] = $l['source'];
 			$p['active'] = $l['active'];
 			$p['overdue'] = $overdue;
 			$p['due'] = $due;
@@ -1328,7 +1329,7 @@ class CompaniesController extends AppController
 					}
 
 					$p['id'] = $l['id'];
-					$p['title'] = $l['title'];
+					$p['title'] = $l['milestone_month_year'] ? $l['title'] . ' ' . $l['milestone_month_year'] : $l['title'];
 					$p['due_date'] = date('d F Y', strtotime($l['due_date']));
 					$p['amount'] = $l['amount'];
 					$p['status'] = $l['status'];
@@ -1881,6 +1882,38 @@ class CompaniesController extends AppController
 				->firstOrFail();
 
 			echo json_encode($miles);
+		} else if ($type == 'copy') { 
+			$miles = $this->ProjectMilestones ->findById($id) ->firstOrFail(); 
+			// Create a new milestone entity 
+			$newMilestone = $this->ProjectMilestones->newEmptyEntity(); 
+			// Copy required fields 
+			$newMilestone->title = $miles->title; 
+			$newMilestone->amount = $miles->amount; 
+			$newMilestone->status = 'Yet to start'; 
+			$newMilestone->deleted = 0;
+			$newMilestone->project_id = $miles->project_id; 
+			// Add one month to the existing due date 
+			if (!empty($miles->due_date)) {
+        		$newDueDate = $this->getNextMonthDueDate($miles->due_date);
+				$newMilestone->due_date = $newDueDate;
+
+				// Save month and year separately
+				$newMilestone->milestone_month_year = $newDueDate->format('F Y');
+			} else { 
+				$newMilestone->due_date = null;
+				$newMilestone->milestone_month_year = null; 
+			} 
+			// Save the copied milestone 
+			if ($SavedMilestone = $this->ProjectMilestones->save($newMilestone)) { 
+				$user_data = $this->getuserdata(); 
+				// Log the copied milestone 
+				$this->milestonelog( $SavedMilestone->project_id, $SavedMilestone->id, $user_data["id"], "Copied" ); 
+				echo json_encode([ 'success' => true, 'message' => 'Milestone copied successfully', 'data' => $SavedMilestone ]); 
+			} else { 
+				echo json_encode([ 'success' => false, 'message' => 'Unable to copy milestone', 'errors' => $newMilestone->getErrors() ]); 
+			} 
+			return; 
+
 		} else {
 
 			$user_data = $this->getuserdata();
@@ -1913,6 +1946,41 @@ class CompaniesController extends AppController
 			$this->milestonelog($project_id["id"], $id, $user_data["id"], "Deleted");
 			echo true;
 		}
+	}
+
+	private function getNextMonthDueDate($originalDate) {
+		if (empty($originalDate)) {
+			return null;
+		}
+
+		$year = (int)$originalDate->format('Y');
+		$month = (int)$originalDate->format('m');
+		$day = (int)$originalDate->format('d');
+
+		$daysInCurrentMonth = cal_days_in_month( CAL_GREGORIAN, $month, $year );
+		$nextMonth = $month + 1;
+		$nextYear = $year;
+
+		if ($nextMonth > 12) {
+			$nextMonth = 1;
+			$nextYear++;
+		}
+		
+		$daysInNextMonth = cal_days_in_month( CAL_GREGORIAN, $nextMonth, $nextYear );
+		/*
+		* If the current date is the last day of the month,
+		* keep it as the last day of the next month.
+		*
+		* Example:
+		* 31 Jan -> 29 Feb -> 31 Mar -> 30 Apr -> 31 May
+		*/
+		if ($day == $daysInCurrentMonth) {
+			$newDay = $daysInNextMonth;
+		} else {
+			// Otherwise keep the same day where possible
+			$newDay = min($day, $daysInNextMonth);
+		}
+		return $originalDate->setDate( $nextYear, $nextMonth, $newDay );
 	}
 
 	public function updateMilestone()

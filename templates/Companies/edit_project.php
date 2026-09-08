@@ -268,6 +268,9 @@ if (isset($_GET['month'])) {
                                                 <option value="External" <?php if (!empty($projects)) {
                                                                                 echo ($source == 'External') ? 'selected' : "";
                                                                             } ?>>External</option>
+                                                <option value="Expertal" <?php if (!empty($projects)) {
+                                                                                echo ($source == 'Expertal') ? 'selected' : "";
+                                                                            } ?>>Expertal</option>
                                             </select>
                                         </div>
                                     </div>
@@ -336,9 +339,8 @@ if (isset($_GET['month'])) {
                     <div class="block">
                         <div class="header">
                             <h4 class="title">Project Milestone <a href="#" data-target="#add_milestone"
-                                    data-toggle="modal" class="v-btn v-btn-primary float-right"><i
-                                        class="fa fa-plus"></i> <span>Add
-                                        Milestone</span></a>
+                                    data-toggle="modal" class="v-btn v-btn-primary float-right">
+                                    <i class="fa fa-plus"></i> <span>Add Milestone</span></a>
                             </h4>
                             <hr>
                             <div class="col-md-3 float-right">
@@ -378,7 +380,13 @@ if (isset($_GET['month'])) {
                                             <input type="checkbox" name="milestoneOne" id="m<?= $m['id']; ?>"
                                                 data-toggle="toggle">
                                         </td>
-                                        <td><?= $m['title']; ?></td>
+                                        <td><?php
+                                            $displayTitle = $m['title'];
+
+                                            if (!empty($m['milestone_month_year'])) {
+                                                $displayTitle .= ' ' . $m['milestone_month_year'];
+                                            } echo $displayTitle; ?>
+                                        </td>
                                         <td><?= $m['due_date']; ?></td>
                                         <td>$<?= $m['amount']; ?></td>
                                         <td>
@@ -404,6 +412,9 @@ if (isset($_GET['month'])) {
                                                     class="fa fa-pencil-alt"></i> </a>
                                             <a href="javascript::void(0);" class="icon" onclick="passValue('delete',<?= $m['id']; ?>)"> <i
                                                     class="fa fa-trash-alt"></i> </a>
+                                            <a href="javascript::void(0);" class="icon" onclick="passValue('copy',<?= $m['id']; ?>)"> 
+                                                <i class="fa fa-clone" aria-hidden="true"></i>
+                                            </a>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -1370,20 +1381,25 @@ $(".cancel").click(function() {
 // getEdit data
 function passValue(type, id) {
     $.ajax({
-
         type: 'GET',
         url: "<?= $this->Url->build('/companies/milesaction/'); ?>" + type + '/' + id,
-
         beforeSend: function() {
-
         },
         success: function(data) {
             if (type == 'edit') {
+            // if (type == 'edit' || type == 'copy') {
                 var response = $.parseJSON(data);
 
                 var d = response.due_date.split('-');
                 var date = d[1] + '/' + d[2] + '/' + d[0];
-                $("#title").val(response.title);
+
+                // Add month/year to title 
+                var title = response.title; 
+                // if (response.milestone_month_year) { 
+                //   title += ' ' + response.milestone_month_year; 
+                // }
+
+                $("#title").val(title);
                 $("#due_date").val(date);
                 $("#amount").val(response.amount);
                 $("#mile_id").val(response.id);
