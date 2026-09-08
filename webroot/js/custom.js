@@ -183,33 +183,22 @@ $(document).ready(function () {
         var count = $(this).attr("data-count");
         var val = $(this).val() == "" ? 0 : $(this).val();
         var url = $("#url").val();
-        url = url + "users/allotment/";
+        url = url + "pmaV2/users/allotment/";
         $.ajax({
             url: url + id + "/" + val + "/" + day,
             type: "GET",
             success: function (returnData) {
-                $(".hour" + count + "_" + id).attr("data-hrs", val);
 
-                var sum = 0;
-                $(".hrs_" + id).each(function () {
-                    sum += Number($(this).val());
-                });
-                // console.log("id=" + id);
-                // console.log("hrs=" + hrs);
-                // console.log(sum);
-                // console.log($(".totalmgr_" + id).val());
-                if ($(".totalmgr_" + id).val() == 0)
-                    $(".totalmgr_" + id).val(sum);
-                else if (Number(hrs) == 0) {
-                    var sum = Number($(".totalmgr_" + id).val()) + Number(val);
-                    $(".totalmgr_" + id).val(sum);
-                } else {
-                    var sum =
-                        Number($(".totalmgr_" + id).val()) +
-                        (Number(val) - Number(hrs));
-                    $(".totalmgr_" + id).val(sum);
-                }
-            },
+            $(".hour" + count + "_" + id).attr("data-hrs", val);
+
+            let totalHours = 0;
+
+            $(".hrs_" + id).each(function () {
+                totalHours += Number($(this).val()) || 0;
+            });
+
+            $(".totalmgr_" + id).val(totalHours);
+        },
         });
     });
 });
