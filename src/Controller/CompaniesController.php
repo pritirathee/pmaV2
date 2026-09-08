@@ -1785,10 +1785,10 @@ class CompaniesController extends AppController
 					$this->request->getData()
 				);
 
-				$mile->due_date = date(
-					'Y-m-d',
-					strtotime($this->request->getData('due_date'))
-				);
+				$dueDate = strtotime($this->request->getData('due_date'));
+
+				$mile->due_date = date('Y-m-d', $dueDate);
+				$mile->milestone_month_year = date('F Y', $dueDate);
 
 				$result = $this->ProjectMilestones->save($mile);
 
@@ -1883,7 +1883,7 @@ class CompaniesController extends AppController
 
 			echo json_encode($miles);
 		} else if ($type == 'copy') { 
-			$miles = $this->ProjectMilestones ->findById($id) ->firstOrFail(); 
+			$miles = $this->ProjectMilestones->findById($id)->firstOrFail(); 
 			// Create a new milestone entity 
 			$newMilestone = $this->ProjectMilestones->newEmptyEntity(); 
 			// Copy required fields 
